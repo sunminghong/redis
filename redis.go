@@ -170,7 +170,7 @@ func (client *Client) openConnection() (c net.Conn, err error) {
     if err != nil {
         return
     }
-    
+
     //handle authentication here authored by @shxsun
     if client.Password != "" {
         cmd := fmt.Sprintf("AUTH %s\r\n", client.Password)
@@ -472,8 +472,7 @@ func (client *Client) Flush(all bool) error {
 // String-related commands
 
 func (client *Client) Set(key string, val []byte) error {
-    _, err := client.sendCommand("SET", key, string(val))
-
+    _, err := client.sendCommand("SET", key, string(val)) 
     if err != nil {
         return err
     }
@@ -1130,6 +1129,32 @@ func (client *Client) Hmset(key string, mapping interface{}) error {
         return err
     }
     return nil
+}
+
+func (client *Client) Hmget(
+    key string, fields ...string) (map[string]string, error) {
+
+    fs := make([]string,len(fields)+1)
+    fs[0] = key
+    copy(fs[1:],fields[:])
+    res, err := client.sendCommand("HMGET", fs...)
+    if err != nil {
+        return nil, err
+    }
+
+    data := res.([][]byte)
+    if data == nil || len(data) == 0 {
+        return nil,RedisError("Key `" + key + "` does not exist")
+    }
+
+    dl := len(data)
+    val := make(map[string]string)
+    for i,k := range fields {
+        if i < dl {
+            val[k] = string(data[i])
+        }
+    }
+    return val,err
 }
 
 func (client *Client) Hincrby(key string, field string, val int64) (int64, error) {

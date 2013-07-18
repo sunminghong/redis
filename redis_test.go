@@ -22,6 +22,7 @@ var client Client
 func init() {
     runtime.GOMAXPROCS(2)
     client.Addr = "127.0.0.1:6379"
+    client.Addr = "192.168.18.18:6379"
     client.Db = 13
 }
 
@@ -646,6 +647,23 @@ func TestHash(t *testing.T) {
         t.Fatal("verifyHash Hgetall failed")
     }
 
+    test8,err := client.Hmget("h4","a","b","c","d","e")
+    if err != nil {
+        t.Fatal("verifyHash Hmget failed", err.Error())
+    }
+    test9 := map[string]string{
+        "a":"aaaaa",
+        "b":"bbbbb",
+        "c":"ccccc",
+        "d":"ddddd",
+        "e":"eeeee",
+    }
+
+    if !reflect.DeepEqual(test8, test9) {
+        t.Fatal("verifyHash Hget failed")
+    }
+
+
     client.Del("h")
     client.Del("h2")
     client.Del("h3")
@@ -709,6 +727,14 @@ func BenchmarkHgetall(b *testing.B) {
     for i := 0; i < b.N; i++ {
         var tt testType
         client.Hgetall("tjs", &tt)
+    }
+    client.Del("tjs")
+}
+
+func BenchmarkHmget(b *testing.B) {
+    client.Hmset("tjs", testObj)
+    for i := 0; i < b.N; i++ {
+        client.Hmget("tjs")
     }
     client.Del("tjs")
 }
